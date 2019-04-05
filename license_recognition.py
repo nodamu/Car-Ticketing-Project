@@ -91,7 +91,7 @@ def decode_predictions(scores, geometry):
 def adjust_pts(pts,lroi):
 	return pts*lroi.wh().reshape((2,1)) + lroi.tl().reshape((2,1))
 
-# # ROI EXTRACTION SECTION
+#  ROI EXTRACTION SECTION
 # # img_dir = "samples/train-detector/new1.jpg"
 wpod_net_path = "models/wpod-net_update1.h5"
 east_model_path = "models/frozen_east_text_detection.pb"
