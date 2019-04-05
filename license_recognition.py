@@ -5,14 +5,21 @@ import os
 import numpy as np
 from imutils.object_detection import non_max_suppression
 import argparse
+from utils.keras_utils import load_model
+from glob import glob
+from os.path import splitext, basename
+from utils.utils import im2single
+from utils.keras_utils import load_model, detect_lp
+from utils.label import Shape, writeShapes
+
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", type=str,
 	help="path to input image")
-ap.add_argument("-east", "--east", type=str,
-	help="path to input EAST text detector")
-ap.add_argument("-c", "--min-confidence", type=float, default=0.5,
+# ap.add_argument("-east", "--east", type=str,
+# 	help="path to input EAST text detector")
+ap.add_argument("-c", "--min-confidence", type=float, default=0.6,
 	help="minimum probability required to inspect a region")
 ap.add_argument("-w", "--width", type=int, default=320,
 	help="nearest multiple of 32 for resized width")
@@ -80,8 +87,40 @@ def decode_predictions(scores, geometry):
 	# return a tuple of the bounding boxes and associated confidences
 	return (rects, confidences) 
 
+
+def adjust_pts(pts,lroi):
+	return pts*lroi.wh().reshape((2,1)) + lroi.tl().reshape((2,1))
+
+# # ROI EXTRACTION SECTION
+# # img_dir = "samples/train-detector/new1.jpg"
+wpod_net_path = "models/wpod-net_update1.h5"
+east_model_path = "models/frozen_east_text_detection.pb"
+model = load_model(wpod_net_path)
+
+vehicle = cv2.imread(args["image"])
+ratio = float(max(vehicle.shape[:2]))/min(vehicle.shape[:2])
+side  = int(ratio*288.)
+bound_dim = min(side + (side%(2**4)),608)
+lp_threshold = .5
+print("\t\tBound dim: %d, ratio: %f" % (bound_dim,ratio))
+
+Llp,LlpImgs,_ = detect_lp(model,im2single(vehicle),bound_dim,2**4,(240,80),lp_threshold)
+
+if len(LlpImgs):
+	Ilp = LlpImgs[0]
+	Ilp = cv2.cvtColor(Ilp, cv2.COLOR_BGR2GRAY)
+	Ilp = cv2.cvtColor(Ilp, cv2.COLOR_GRAY2BGR)
+
+	s = Shape(Llp[0].pts)
+
+	# Write cropped license plate file to output directory
+	cv2.imwrite('output/temp.png',Ilp*255.)
+	# writeShapes('test_lp.txt',[s])
+	
+
+# OCR SECTION
 # load the input image and grab the image dimensions
-image = cv2.imread(args["image"])
+image = cv2.imread('output/temp.png')
 orig = image.copy()
 (origH, origW) = image.shape[:2]
 
@@ -104,8 +143,9 @@ layerNames = [
 
 # load the pre-trained EAST text detector
 print("[INFO] loading EAST text detector...")
-net = cv2.dnn.readNet(args["east"])
-
+net = cv2.dnn.readNet(east_model_path)
+cv2.imshow("Test",image)
+cv2.waitKey(0)
 # construct a blob from the image and then perform a forward pass of
 # the model to obtain the two output layer sets
 blob = cv2.dnn.blobFromImage(image, 1.0, (W, H),
@@ -178,7 +218,9 @@ for (startX, startY, endX, endY) in boxes:
 	# (3) an OEM value, in this case, 7 which implies that we are
 	# treating the ROI as a single line of text
 	config = ("-l eng --oem 1 --psm 7")
-	text = pytesseract.image_to_string(roi, config=config)
+	gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+	gray = cv2.threshold(gray, 0, 255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	text = pytesseract.image_to_string(gray, config=config)
 
 	# add the bounding box coordinates and OCR'd text to the list
 	# of results
@@ -187,18 +229,23 @@ for (startX, startY, endX, endY) in boxes:
 # sort the results bounding box coordinates from top to bottom
 results = sorted(results, key=lambda r:r[0][1])
 
+# Print only text
+# for i in results:
+# 	print(i[1])
 # loop over the results
 for ((startX, startY, endX, endY), text) in results:
-	# display the text OCR'd by Tesseract
+	# # display the text OCR'd by Tesseract
 	print("OCR TEXT")
 	print("========")
 	print("{}\n".format(text))
+	
 
 	# strip out non-ASCII text so we can draw the text on the image
 	# using OpenCV, then draw the text and a bounding box surrounding
 	# the text region of the input image
 	text = "".join([c if ord(c) < 128 else "" for c in text]).strip()
 	output = orig.copy()
+	# 	img = cv2.resize(output,None,fx=0.5,fy=0.5,interpolation=cv2.INTER_CUBIC)
 	cv2.rectangle(output, (startX, startY), (endX, endY),
 		(0, 0, 255), 2)
 	cv2.putText(output, text, (startX, startY - 20),

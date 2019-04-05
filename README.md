@@ -16,7 +16,7 @@
 * Install __imutils__ with **pip install imutils**
 
 ### Running the project
-* $ python license_recognition.py --images images/a4.JPG -east frozen_east_text_detection.pb --width 384 --height 128
+* $ python license_recognition.py --image images/a4.JPG -east frozen_east_text_detection.pb --width 352 --height 128
 
 
 
