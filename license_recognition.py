@@ -144,7 +144,7 @@ layerNames = [
 # load the pre-trained EAST text detector
 print("[INFO] loading EAST text detector...")
 net = cv2.dnn.readNet(east_model_path)
-cv2.imshow("Test",image)
+cv2.imshow("License Plate",image)
 cv2.waitKey(0)
 # construct a blob from the image and then perform a forward pass of
 # the model to obtain the two output layer sets

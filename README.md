@@ -16,7 +16,7 @@
 * Install __imutils__ with **pip install imutils**
 
 ### Running the project
-* $ python license_recognition.py --image images/a4.JPG 
+* $ python license_recognition.py --image <path_to_image>
 
 
 
