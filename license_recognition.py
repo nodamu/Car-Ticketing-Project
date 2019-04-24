@@ -228,7 +228,9 @@ for (startX, startY, endX, endY) in boxes:
 
 #--------------------------------------API SECTION -----------------------------------------
 # sort the results bounding box coordinates from top to bottom
+# contains results of OCR system
 results = sorted(results, key=lambda r:r[0][1])
+
 # Add regex to filter false postives
 # Print only text
 # for i in results:
@@ -236,7 +238,7 @@ results = sorted(results, key=lambda r:r[0][1])
 # loop over the results
 #-------------------------------------------------------------------------------------------
 
-
+# 
 for ((startX, startY, endX, endY), text) in results:
 	# # display the text OCR'd by Tesseract
 	print("OCR TEXT")
