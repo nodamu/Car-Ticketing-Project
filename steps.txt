@@ -1,0 +1,5 @@
+1. Open visual studio code 
+2. Open terminal
+3. Enter conda activate ztdl in terminal
+4. Run python video.py
+5. Press q to loop through frames
