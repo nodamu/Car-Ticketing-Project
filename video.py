@@ -104,7 +104,8 @@ model = load_model(wpod_net_path)
 # lp_threshold = .5
 # print("\t\tBound dim: %d, ratio: %f" % (bound_dim,ratio))
 
-vs = cv2.VideoCapture('vids/VID-20190526-WA0007.mp4')
+# Video Section
+vs = cv2.VideoCapture('vids/VID-20190526-WA0005.mp4')
 writer = None
 (W,H) = (None,None)
 
@@ -135,8 +136,8 @@ while True:
     lp_threshold = .5
     # print("\t\tBound dim: %d, ratio: %f" % (bound_dim,ratio))
     cv2.imshow("Video", frame)
-    img = frame.copy
-    Llp,LlpImgs,_ = detect_lp(model,im2single(),bouimgnd_dim,2**4,(240,80),lp_threshold)
+    
+    Llp,LlpImgs,_ = detect_lp(model,im2single(frame),bound_dim,2**4,(240,80),lp_threshold)
 
     if len(LlpImgs):
         Ilp = LlpImgs[0]
@@ -146,7 +147,7 @@ while True:
         s = Shape(Llp[0].pts)
         print(Llp[0].pts)
         cv2.imshow("Text Detection",Ilp)
-        # cv2.waitKey(0)
+        cv2.waitKey(0)
     # cv2.destroyAllWindows()
         # print(s)
         # Write cropped license plate file to output directory
